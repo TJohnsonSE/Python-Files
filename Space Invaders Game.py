@@ -113,13 +113,14 @@ def main():
     level = 0
     lives = 5
     main_font = pygame.font.SysFont("onyx", 30)
-    end_font = pygame.font.SysFont("onyx", 50)
+    game_over_font = pygame.font.SysFont("onyx", 50)
+    pause_game_font = pygame.font.SysFont("onyx", 50)
     player_ship = PlayerShip(375, 650)
     player_velocity = 3.5
 
     enemies = []
-    enemy_wave_length = 5
-    enemy_velocity = 20
+    enemy_wave_length = 0
+    enemy_velocity = 2
 
     # Function redraw_window: This function will update the window by redrawing the background
     def redraw_window():
@@ -149,6 +150,7 @@ def main():
 
         clock.tick(FPS)
 
+        # If the user runs out of lives, exit the game logic loop (end the game)
         if lives == 0:
             run = False
             break
@@ -178,21 +180,44 @@ def main():
         # Create a dictionary that will map keys pressed to a True or False value
         keys = pygame.key.get_pressed()
 
+        # Function pause_game: takes one argument, which is a boolean value with a value of 'True' if the escape key is pressed
+        # or 'False' if it is not
+        def pause_game(escape_key_pressed):
+            while escape_key_pressed:
+                pause_game_label = pause_game_font.render(f"PAUSED", 1, (255,255,255))
+                WIN.blit(pause_game_label, ((WIDTH/2 - pause_game_label.get_width()/2),HEIGHT/2))
+                player_velocity = 0
+                enemy_velocity = 0
+                pygame.display.update()
+                return True
+            
         # Player movement logic; player can move up only to a y value of 500, and cannot move off of the screen at all
 
-        # Left (subtract from x value)
+        # Move player_ship left (subtract from x value)
         if keys[pygame.K_a] == True and player_ship.x - player_velocity > -13:
             player_ship.x -= player_velocity
-        # Down (add to y value)
+        # Move player_ship down (add to y value)
         if keys[pygame.K_s] == True and player_ship.y + player_velocity < HEIGHT - player_ship.get_height():
             player_ship.y += player_velocity
-        # Right (add to x value)
+        # Move player_ship right (add to x value)
         if keys[pygame.K_d] == True and player_ship.x + player_velocity < WIDTH - player_ship.get_width() + 13:
             player_ship.x += player_velocity
-        # Up (subtract from y value)
+        # Move player_ship up (subtract from y value)
         if keys[pygame.K_w] == True and player_ship.y - player_velocity > 500:
             player_ship.y -= player_velocity
-
+        # Pause game
+        if keys[pygame.K_ESCAPE] == True:
+            pause_flag = True
+            pause_game(keys[pygame.K_ESCAPE])
+            
+        # Speed up enemies
+        if keys[pygame.K_UP]:
+            enemy_velocity += 0.1
+        # Slow down enemies
+        if keys[pygame.K_DOWN]:
+            enemy_velocity -= 0.1
+                
+        # Remove a life if an enemy reaches the bottom of the screen, and remove that enemy from being active
         for enemy in enemies:
             enemy.move(enemy_velocity)
             if enemy.y >= 750:
@@ -201,8 +226,8 @@ def main():
         
         redraw_window()  # Update the window on every frame
 
-
-    game_over_label = end_font.render(f"GAME OVER", 1, (255,0,0))
+    # Display game over screen for two seconds and exit while loop running the game logic
+    game_over_label = game_over_font.render(f"GAME OVER", 1, (255,0,0))
     WIN.blit(game_over_label, (300,375))
     pygame.display.update()
     time.sleep(2)
