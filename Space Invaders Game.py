@@ -5,8 +5,10 @@ import pygame
 import os
 import random
 import time
+from playsound import playsound
 
 pygame.font.init()
+pygame.mixer.init()
 
 # Set up the display
 WIDTH, HEIGHT = 750, 750
@@ -191,10 +193,12 @@ def main():
     player_ship = PlayerShip(375, 650)
     player_velocity = 3.5
     laser_velocity = 4
+    laser_sound_effect = pygame.mixer.Sound("laser.mp3")
+    game_over_sound_effect = pygame.mixer.Sound("mixkit-arcade-retro-game-over-213.wav")
+    played_sound_count_game_over = 0
     enemies = []
     enemy_wave_length = 0
     enemy_velocity = 2
-    laser_sound_effect = pygame.mixer.Sound("")
 
     # Function redraw_window: This function will update the window by redrawing the background
     def redraw_window():
@@ -229,15 +233,21 @@ def main():
         if lives == 0 or player_ship.health == 0:
             game_over = True
             game_over_count += 1
-
+            
         # When the player loses
         if game_over:
-
+            
             # Display game over screen for five seconds (FPS * 3) and exit while loop running the game logic
             game_over_label = game_over_font.render(f"GAME OVER", 1, (255, 0, 0))
             WIN.blit(game_over_label, (WIDTH/2 - game_over_label.get_width()/2, 375))
             pygame.display.update()
-
+            
+            if played_sound_count_game_over == 0:
+                played_sound_count_game_over += 1
+                game_over_sound_effect.play()
+                time.sleep(1)
+                game_over_sound_effect.stop()
+            
             # Wait 3 seconds
             if game_over_count > FPS * 3:
                 run = False
@@ -308,6 +318,9 @@ def main():
         # Pause game
         if keys[pygame.K_SPACE] == True:
             player_ship.shoot()
+            laser_sound_effect.play()
+            
+            
             
 
         # Speed up enemies
