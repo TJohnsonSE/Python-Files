@@ -1,3 +1,4 @@
+from json.encoder import INFINITY
 import math
 import sys
 import pygame
@@ -40,11 +41,36 @@ BACKGROUND = pygame.transform.scale(pygame.image.load(
 
 # Classes
 
+# Class: 'Laser'
+class Laser:
+    def __init__(self, x, y, img):
+        self.x = x
+        self.y = y
+        self.img = img
+        self.mask = pygame.mask.from_surface(self.img)
+    
+    # Render the laser object to the display window
+    def draw(self, WIN):
+        WIN.blit(self.img, (self.x, self.y))
+    
+    # Increment the laser object's 'y' value by the 'velocity' argument  
+    def move(self, velocity):
+        self.y += velocity
+    
+    # Returns True or False depending on the position of the laser object.  If the object
+    # is off of the visible screen, return True
+    def off_screen(self, height):
+        return not(self.y <= height and self.y >= 0)
+    
+    def collision(self, obj):
+        return collide(obj, self)
+        
 # Default parent class: 'Ship'
-
-
 class Ship:
 
+    # Cooldown will be equal to half a second
+    COOLDOWN = 30
+    
     # Default constructor
     def __init__(self, x, y, health=100):
         self.x = x
@@ -59,15 +85,43 @@ class Ship:
     # rendered onto
     def draw_ship(self, window):
         window.blit(self.ship_img, (self.x, self.y))
-
+        for laser in self.lasers:
+            laser.draw(window)
+            
+    # Function move_lasers(velocity, obj): takes 2 arguments, 'velocity' is the speed at which Laser objects will travel
+    # and 'obj' refers to the object that the method will pass to the 'laser.collision()' method to check for collision between
+    # the laser and 'obj'
+    def move_lasers(self, velocity, obj):
+        self.cooldown()
+        for laser in self.lasers:
+            laser.move(velocity)
+            if laser.off_screen(HEIGHT):
+                self.lasers.remove(laser)
+            elif laser.collision(obj):
+                obj.health -= 10
+                self.lasers.remove(laser)
+                
+    def shoot(self):
+        if self.cool_down_counter == 0:
+            laser = Laser(self.x, self.y, self.laser_img)
+            self.lasers.append(laser)
+            self.cool_down_counter = 1
+    
+    def cooldown(self):
+        if self.cool_down_counter >= self.COOLDOWN:
+            self.cool_down_counter = 0
+        if self.cool_down_counter > 0:
+            self.cool_down_counter += 1     
+               
     def get_width(self):
         return self.ship_img.get_width()
 
     def get_height(self):
         return self.ship_img.get_height()
+    
+    
 
 # Child class: 'PlayerShip' inherits from parent class 'Ship'
-
 
 class PlayerShip(Ship):
     def __init__(self, x, y, health=100):
@@ -78,7 +132,19 @@ class PlayerShip(Ship):
         # Create a mask that fits the "ship_img" image pixel perfectly for collision
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
-
+    
+    def move_lasers(self, velocity, objs):
+        self.cooldown()
+        for laser in self.lasers:
+            laser.move(-velocity)
+            if laser.off_screen(HEIGHT):
+                self.lasers.remove(laser)
+            else:
+                for obj in objs:
+                    if laser.collision(obj):
+                        objs.remove(obj)
+                        self.lasers.remove(laser)
+                    
 
 class EnemyShip(Ship):
 
@@ -100,6 +166,10 @@ class EnemyShip(Ship):
     def move(self, velocity):
         self.y += velocity
 
+def collide(obj1, obj2):
+    offset_x = obj2.x - obj1.x
+    offset_y = obj2.y - obj1.y
+    return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 #################################################################################################################################
 
 # Function main(): Function contains logic for running the main game
@@ -107,20 +177,24 @@ class EnemyShip(Ship):
 
 def main():
 
+    # Game variables
     run = True
     FPS = 60  # Try to keep this at 60 or above, otherwise the game will update less frequently
     clock = pygame.time.Clock()
-    level = 0
+    level = 0 # Start at level 0
     lives = 5
+    game_over_count = 0
+    game_over = False
     main_font = pygame.font.SysFont("onyx", 30)
     game_over_font = pygame.font.SysFont("onyx", 50)
     pause_game_font = pygame.font.SysFont("onyx", 50)
     player_ship = PlayerShip(375, 650)
     player_velocity = 3.5
-
+    laser_velocity = 4
     enemies = []
     enemy_wave_length = 0
     enemy_velocity = 2
+    laser_sound_effect = pygame.mixer.Sound("")
 
     # Function redraw_window: This function will update the window by redrawing the background
     def redraw_window():
@@ -149,12 +223,27 @@ def main():
     while run == True:
 
         clock.tick(FPS)
+        redraw_window()  # Update the window on every frame
+        
+        # If the user runs out of lives or player health hits 0, exit the game logic loop (player loses, exit the game)
+        if lives == 0 or player_ship.health == 0:
+            game_over = True
+            game_over_count += 1
 
-        # If the user runs out of lives, exit the game logic loop (end the game)
-        if lives == 0:
-            run = False
-            break
-            
+        # When the player loses
+        if game_over:
+
+            # Display game over screen for five seconds (FPS * 3) and exit while loop running the game logic
+            game_over_label = game_over_font.render(f"GAME OVER", 1, (255, 0, 0))
+            WIN.blit(game_over_label, (WIDTH/2 - game_over_label.get_width()/2, 375))
+            pygame.display.update()
+
+            # Wait 3 seconds
+            if game_over_count > FPS * 3:
+                run = False
+            else:
+                continue
+
         # Increment the 'level' by one every time all enemies are eliminated
         if len(enemies) == 0:
             level += 1
@@ -176,21 +265,32 @@ def main():
             # Display the coordinates of the mouse position each time the user clicks
             if event.type == pygame.MOUSEBUTTONDOWN:
                 print("Mouse cursor is at " + str(pygame.mouse.get_pos()))
-
+            
         # Create a dictionary that will map keys pressed to a True or False value
         keys = pygame.key.get_pressed()
 
         # Function pause_game: takes one argument, which is a boolean value with a value of 'True' if the escape key is pressed
         # or 'False' if it is not
-        def pause_game(escape_key_pressed):
-            while escape_key_pressed:
+        def pause_game():
+
+                pause_count = 0
+                pause_countdown = 10
+                
                 pause_game_label = pause_game_font.render(f"PAUSED", 1, (255,255,255))
+                pause_count_label = pause_game_font.render(f"{pause_countdown}", 1, (255,255,255))
+                
                 WIN.blit(pause_game_label, ((WIDTH/2 - pause_game_label.get_width()/2),HEIGHT/2))
                 player_velocity = 0
                 enemy_velocity = 0
                 pygame.display.update()
-                return True
-            
+                
+                while pause_count > (FPS * 10):
+                    pause_countdown -= 1
+                    WIN.blit(pause_count_label, ((WIDTH/2), HEIGHT/2 + 50))
+                    pygame.display.update()
+                
+                
+
         # Player movement logic; player can move up only to a y value of 500, and cannot move off of the screen at all
 
         # Move player_ship left (subtract from x value)
@@ -206,31 +306,25 @@ def main():
         if keys[pygame.K_w] == True and player_ship.y - player_velocity > 500:
             player_ship.y -= player_velocity
         # Pause game
-        if keys[pygame.K_ESCAPE] == True:
-            pause_flag = True
-            pause_game(keys[pygame.K_ESCAPE])
+        if keys[pygame.K_SPACE] == True:
+            player_ship.shoot()
             
+
         # Speed up enemies
         if keys[pygame.K_UP]:
             enemy_velocity += 0.1
         # Slow down enemies
         if keys[pygame.K_DOWN]:
             enemy_velocity -= 0.1
-                
+
         # Remove a life if an enemy reaches the bottom of the screen, and remove that enemy from being active
         for enemy in enemies:
             enemy.move(enemy_velocity)
+            enemy.move_lasers(laser_velocity, player_ship)
             if enemy.y >= 750:
                 lives -= 1
                 enemies.remove(enemy)
-        
-        redraw_window()  # Update the window on every frame
 
-    # Display game over screen for two seconds and exit while loop running the game logic
-    game_over_label = game_over_font.render(f"GAME OVER", 1, (255,0,0))
-    WIN.blit(game_over_label, (300,375))
-    pygame.display.update()
-    time.sleep(2)
-    
-    
+        player_ship.move_lasers(laser_velocity, enemies)
+        
 main()  # Run the game!
