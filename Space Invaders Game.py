@@ -48,8 +48,6 @@ BACKGROUND = pygame.transform.scale(pygame.image.load(
 #############################################################################
 
 # Class: 'Laser'
-
-
 class Laser:
     def __init__(self, x, y, img):
         self.x = x
@@ -75,21 +73,21 @@ class Laser:
         return collide(obj, self)
 
 # Default parent class: 'Ship'
-
-
 class Ship:
 
     # Class Variables
     ################
-
-    # Cooldown will be equal to a quarter second (FPS/2)
-    COOLDOWN = 15
+    laser_sound_effect = pygame.mixer.Sound("laser-gun-19sf.mp3")
+    laser_sound_effect.set_volume(.2)
     
+    # Cooldown will be equal to a quarter second (FPS/2)
+    COOLDOWN = 20
 
     # Class Methods
     #################
 
     # Default Ship constructor
+
     def __init__(self, x, y, health=100):
         self.x = x
         self.y = y
@@ -98,11 +96,14 @@ class Ship:
         self.laser_img = None
         self.lasers = []
         self.cool_down_counter = 0
+        self.laser_velocity = 4
 
     # Function draw_ship(window): takes one argument, which is the display that the ship will be
     # rendered onto
     def draw_ship(self, window):
         window.blit(self.ship_img, (self.x, self.y))
+    
+    def draw_lasers(self, window):
         for laser in self.lasers:
             laser.draw(window)
 
@@ -111,7 +112,7 @@ class Ship:
     # the laser and 'obj'
     def move_lasers(self, velocity, obj):
 
-        self.cooldown()
+        self.laser_cooldown()
 
         for laser in self.lasers:
 
@@ -127,16 +128,20 @@ class Ship:
 
     def shoot(self):
 
+        # Create a new Laser object and append it to the object's 'lasers' list, then increment 'cool_down_counter' by one
+        # so that not too many Laser objects can be created close together
         if self.cool_down_counter == 0:
-            laser = Laser(self.x, self.y, self.laser_img)
-            self.lasers.append(laser)
-            self.cool_down_counter += 1
+            if self.y > 0:
+                laser = Laser(self.x, self.y, self.laser_img)
+                self.lasers.append(laser)
+                self.laser_sound_effect.play()
+                self.cool_down_counter += 1
 
-    def cooldown(self):
-        
+    def laser_cooldown(self):
+
         if self.cool_down_counter >= self.COOLDOWN:
             self.cool_down_counter = 0
-            
+
         if self.cool_down_counter > 0:
             self.cool_down_counter += 1
 
@@ -146,26 +151,24 @@ class Ship:
     def get_height(self):
         return self.ship_img.get_height()
 
-
 # Child class: 'PlayerShip' inherits from parent class 'Ship'
-
 class PlayerShip(Ship):
-    
+
     # Class Variables
     #################
-    
+
     # The laser sound effect that the player ship object will use
     laser_sound_effect = pygame.mixer.Sound("laser-gun-19sf.mp3")
     laser_sound_effect.set_volume(.2)
-    
+
     # Class Methods
     ###############
-    
+
     def __init__(self, x, y, health=100):
-        
+
         # Call the parent constructor 'Ship'
         super().__init__(x, y, health)
-        
+
         self.ship_img = YELLOW_SPACE_SHIP
         self.laser_img = YELLOW_LASER
 
@@ -177,24 +180,28 @@ class PlayerShip(Ship):
     # method in that the velocity passed to the Laser.move() method needs to be negative for the laser to travel upwards.  It
     # also must check for collision with the 'objs' argument, which will generally be a list of enemy ship objects.
     def move_lasers(self, velocity, objs):
-        
-        self.cooldown()
-        
+
+        self.laser_cooldown()
+
         for laser in self.lasers:
             laser.move(-velocity)
-            
+
             if laser.off_screen(HEIGHT):
                 self.lasers.remove(laser)
-                
+
             else:
                 for obj in objs:
                     if laser.collision(obj):
                         objs.remove(obj)
                         self.lasers.remove(laser)
-
-
+        
+# Child class: 'EnemyShip' inherits from parent class 'Ship
 class EnemyShip(Ship):
-
+    
+    # Class Variables
+    laser_sound_effect = pygame.mixer.Sound("laser.mp3")
+    laser_sound_effect.set_volume(.2)
+    
     # A dictionary that stores the loaded assets with their corresponding color key (key = color, value = assets tuple)
     COLOR_MAP = {"red": (RED_SPACE_SHIP, RED_LASER),
                  "green": (GREEN_SPACE_SHIP, GREEN_LASER),
@@ -212,36 +219,36 @@ class EnemyShip(Ship):
     # EnemyShip objects will only move towards the player (down), this is the only needed effect
     def move(self, velocity):
         self.y += velocity
+        
+   
+    def random_laser_chance(self):
+        random_chance = random.randrange(0,1000)
+        return random_chance
+        
+# Program Functions (Global scope)
+##################################
 
+def cooldown(self):
+
+    if self.cool_down_counter >= self.COOLDOWN:
+        self.cool_down_counter = 0
+
+    if self.cool_down_counter > 0:
+        self.cool_down_counter += 1
 
 def collide(obj1, obj2):
     offset_x = obj2.x - obj1.x
     offset_y = obj2.y - obj1.y
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
-def cooldown(self):
-        
-        if self.cool_down_counter >= self.COOLDOWN:
-            self.cool_down_counter = 0
-            
-        if self.cool_down_counter > 0:
-            self.cool_down_counter += 1
-    
-def shoot(self):
-    if self.cool_down_counter == 0:
-        laser = Laser(self.x, self.y, self.laser_img)
-        self.lasers.append(laser)
-        self.cool_down_counter += 1
-        
-    
-#################################################################################################################################
+##################################################
 
 # Function main(): Function contains logic for running the main game
-
-
 def main():
 
     # Game variables
+    ################
+    
     run = True
     FPS = 60  # Try to keep this at 60 or above, otherwise the game will update less frequently
     clock = pygame.time.Clock()
@@ -254,7 +261,6 @@ def main():
     pause_game_font = pygame.font.SysFont("onyx", 50)
     player_ship = PlayerShip(375, 650)
     player_velocity = 3.5
-    laser_velocity = 4
     game_over_sound_effect = pygame.mixer.Sound(
         "mixkit-arcade-retro-game-over-213.wav")
     played_sound_count_game_over = 0
@@ -262,7 +268,7 @@ def main():
     enemy_wave_length = 0
     enemy_velocity = 1
 
-    # Function redraw_window: This function will update the window by redrawing the background
+    # Method redraw_window(): (0 arguments) This function will update the window by redrawing the background
     def redraw_window():
 
         # Render the background
@@ -279,17 +285,22 @@ def main():
         # Render the enemies to display
         for enemy in enemies:
             enemy.draw_ship(WIN)
+            enemy.draw_lasers(WIN)
 
         # Render the player ship to display
         player_ship.draw_ship(WIN)
+        player_ship.draw_lasers(WIN)
 
         pygame.display.update()
 
+    # RUN GAME
+    ##########
+    
     # While loop runs the game logic until the user quits
     while run == True:
 
         clock.tick(FPS)
-        
+
         redraw_window()  # Update the window on every frame
 
         # If the user runs out of lives or player health hits 0, exit the game logic loop (player loses, exit the game)
@@ -385,7 +396,6 @@ def main():
         # Pause game
         if keys[pygame.K_SPACE] == True:
             player_ship.shoot()
-            player_ship.laser_sound_effect.play()
 
         # Speed up enemies
         if keys[pygame.K_UP]:
@@ -394,15 +404,25 @@ def main():
         if keys[pygame.K_DOWN]:
             enemy_velocity -= 0.1
 
-        # Remove a life if an enemy reaches the bottom of the screen, and remove that enemy from being active
+        # Enemy movement
         for enemy in enemies:
+            
+            # Move enemy by 'enemy_velocity'
             enemy.move(enemy_velocity)
-            enemy.move_lasers(laser_velocity, player_ship)
+            
+            # Move the lasers that an enemy shoots
+            if enemy.random_laser_chance() >= 995:
+                enemy.shoot()
+            
+            enemy.move_lasers(enemy.laser_velocity, player_ship)
+            
+            # If the enemy object reaches the bottom of the screen, remove a life from the player and remove that
+            # enemy from the game
             if enemy.y >= 750:
                 lives -= 1
                 enemies.remove(enemy)
 
-        player_ship.move_lasers(laser_velocity, enemies)
+        player_ship.move_lasers(enemy.laser_velocity, enemies)
 
 
 main()  # Run the game!
