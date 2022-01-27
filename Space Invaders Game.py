@@ -241,6 +241,9 @@ def collide(obj1, obj2):
     offset_y = obj2.y - obj1.y
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
+def display_healthbar(window, health):
+    pygame.draw.rect(window, (0,255,0), ((375 - (3 * health)/2), 10, (3 * health), 10))
+
 ##################################################
 
 # Function main(): Function contains logic for running the main game
@@ -282,6 +285,9 @@ def main():
         WIN.blit(lives_label, (10, 10))
         WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
 
+        # Render the health bar to display
+        display_healthbar(WIN, player_ship.health)
+        
         # Render the enemies to display
         for enemy in enemies:
             enemy.draw_ship(WIN)
@@ -325,7 +331,7 @@ def main():
                 game_over_sound_effect.stop()
 
             # Wait 3 seconds
-            if game_over_count > FPS * 3:
+            if game_over_count > FPS * 2:
                 run = False
             else:
                 continue
