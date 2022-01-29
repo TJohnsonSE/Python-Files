@@ -315,7 +315,9 @@ def collide(obj1, obj2):
 
 
 def display_healthbar(window, health, player_ship):
-    health_rect = pygame.Rect(player_ship.x, (player_ship.y + 110), (health), 10)
+    health_rect = pygame.Rect(player_ship.x, (player_ship.y + 110), health, 10)
+    lost_health_rect = pygame.Rect(player_ship.x, (player_ship.y + 110), 100, 10)
+    pygame.draw.rect(window, (255, 0, 0), lost_health_rect)
     pygame.draw.rect(window, (0, 255, 0), health_rect)
 
 def display_score(window, score):
