@@ -30,8 +30,8 @@ GREEN_SPACE_SHIP = pygame.image.load(
     os.path.join("assets", "pixel_ship_green_small.png"))
 BLUE_SPACE_SHIP = pygame.image.load(
     os.path.join("assets", "pixel_ship_blue_small.png"))
-YELLOW_SPACE_SHIP = pygame.image.load(
-    os.path.join("assets", "pixel_ship_yellow.png"))
+PLAYER_SPACE_SHIP = pygame.image.load(
+    os.path.join("assets", "Player_SpaceShip_01.png"))
 
 # Lasers
 RED_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_red.png"))
@@ -42,7 +42,7 @@ YELLOW_LASER = pygame.image.load(
     os.path.join("assets", "pixel_laser_yellow.png"))
 
 # Powerups
-HEALTH_UP = pygame.image.load(os.path.join("assets", "pixil-frame-0 (5).png"))
+HEALTH_UP = pygame.image.load(os.path.join("assets", "Heart_Powerup.png"))
 
 # Background
 BACKGROUND = pygame.transform.scale(pygame.image.load(
@@ -162,7 +162,7 @@ class Ship:
         return self.ship_img.get_height()
 
 # Child class: 'PlayerShip' inherits from parent class 'Ship'
-class PlayerShip(Ship):
+class playerShip(Ship):
 
     # Class Variables
     #################
@@ -183,7 +183,7 @@ class PlayerShip(Ship):
         # Call the parent constructor 'Ship'
         super().__init__(x, y, health)
 
-        self.ship_img = YELLOW_SPACE_SHIP
+        self.ship_img = PLAYER_SPACE_SHIP
         self.laser_img = YELLOW_LASER
 
         # Create a mask that fits the "ship_img" image pixel perfectly for collision
@@ -208,10 +208,24 @@ class PlayerShip(Ship):
                     if laser.collision(obj):
                         self.score += 1
                         objs.remove(obj)
-                        self.lasers.remove(laser)
+                        if laser in self.lasers:
+                            self.lasers.remove(laser)
+                        
+    def shoot(self):
+
+        # Create a new Laser object and append it to the object's 'lasers' list, then increment 'cool_down_counter' by one
+        # so that not too many Laser objects can be created close together
+        if self.cool_down_counter == 0:
+            if self.y > 0:
+                laser1 = Laser(self.x + 30, self.y - 8, self.laser_img)
+                laser2 = Laser(self.x - 35, self.y - 8, self.laser_img)
+                self.lasers.append(laser1)
+                self.lasers.append(laser2)
+                self.LASER_SOUND_EFFECT.play()
+                self.cool_down_counter += 1
         
     def spawn_player(x, y):
-        player_ship = PlayerShip(x, y)
+        player_ship = playerShip(x, y)
         return player_ship
                         
     def get_health(self):
@@ -227,7 +241,7 @@ class PlayerShip(Ship):
         self.lives = lives
 
 # Child class: 'EnemyShip' inherits from parent class 'Ship
-class EnemyShip(Ship):
+class enemyShip(Ship):
 
     # Class Variables
     LASER_SOUND_EFFECT = pygame.mixer.Sound(os.path.join("assets\laser.mp3"))
@@ -267,7 +281,7 @@ class Powerup(Ship):
         super().__init__(x, y, health)
 
 # Child class: 'HealthPowerup' inherits from parent class 'Powerup'; (Granchild of 'Ship')
-class HealthPowerup(Powerup):
+class healthPowerup(Powerup):
     
     def __init__(self, x, y, health=1):
         super().__init__(x, y, health)
@@ -300,15 +314,21 @@ def collide(obj1, obj2):
     return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
 
-def display_healthbar(window, health):
-    pygame.draw.rect(window, (0, 255, 0),
-                     ((375 - (3 * health)/2), 10, (3 * health), 10))
+def display_healthbar(window, health, player_ship):
+    health_rect = pygame.Rect(player_ship.x, (player_ship.y + 110), (health), 10)
+    pygame.draw.rect(window, (0, 255, 0), health_rect)
 
 def display_score(window, score):
     score_font = pygame.font.SysFont("onyx", 30)
     score_label = score_font.render(f"Score: {score}", 1, (255, 255, 255))
-    WIN.blit(score_label, (10, 40))
+    window.blit(score_label, (10, 40))
     return score_label
+
+def display_high_score(window, high_score):
+    high_score_font = pygame.font.SysFont("onyx", 30)
+    high_score_label = high_score_font.render(f"High Score: {high_score}", 1, (132, 233, 229))
+    window.blit(high_score_label, (WIDTH - high_score_label.get_width() - 10, 40))
+    
 
 # Function main(): Function contains logic for running the main game
 def main():
@@ -328,7 +348,18 @@ def main():
     enemies = []
     powerups = []
     enemy_wave_length = 0
-    player_ship = PlayerShip.spawn_player(375, 650)
+    player_ship = playerShip.spawn_player(375, 650)
+    
+    if os.path.exists("space_invaders_score.txt"):
+        high_score_file = open("space_invaders_score.txt", "r", 1)
+        high_score_list = high_score_file.readlines()
+        high_score = int(high_score_list[0])
+        high_score_file.close()
+        high_score_file = open("space_invaders_score.txt", "w", 1)
+        
+    else:
+        high_score_file = open("space_invaders_score.txt", "w", 1)
+        high_score = 0
     
     # Method redraw_window(): (0 arguments) This function will update the window by redrawing the background
     def redraw_window():
@@ -347,8 +378,11 @@ def main():
         # Render the score to display
         display_score(WIN, player_ship.score)
         
+        # Render the high score to displa
+        display_high_score(WIN, high_score)
+       
         # Render the health bar to display
-        display_healthbar(WIN, player_ship.health)
+        display_healthbar(WIN, player_ship.health, player_ship)
 
         # Render the powerups to display
         for powerup in powerups:
@@ -406,7 +440,6 @@ def main():
                     game_over_sound_effect.play()
                     time.sleep(1)
                     game_over_sound_effect.stop()
-            
             return True
     
         else:
@@ -423,11 +456,11 @@ def main():
                 enemy_wave_length += 3
             
             if level % 3 == 0:
-                health_heart = HealthPowerup(random.randrange(100, WIDTH - 100), -20, None)
+                health_heart = healthPowerup(random.randrange(100, WIDTH - 100), -20, None)
                 powerups.append(health_heart)
             
             for enemy in range(enemy_wave_length):
-                enemy = EnemyShip(random.randrange(
+                enemy = enemyShip(random.randrange(
                     50, WIDTH-50), random.randrange(-1000, -100), random.choice(["red", "blue", "green"]))
                 enemies_list.append(enemy)
         
@@ -442,8 +475,8 @@ def main():
 
         clock.tick(FPS)
         redraw_window()  # Update the window on every frame
-
-        # Game over checks
+        
+        # Game over check
         ##################
         
         # If the user runs out of lives or player health hits 0, exit the game logic loop (player loses, exit the game)
@@ -454,14 +487,18 @@ def main():
                 run = False
             else:
                 continue
-
+        
+        # Next level check
+        ##################
+        
         # Increment the 'level' by one every time all enemies are eliminated
         level, enemies, enemy_wave_length = next_level(level, enemies, enemy_wave_length, WIN)
 
-         # Check for user quitting the game, or exiting the window
+        # Check for user quitting the game, or exiting the window
         for event in pygame.event.get():
 
             if event.type == pygame.QUIT:  # If the user quits, then set 'run' flag to False to exit game run loop
+                player_ship.score = 0
                 run = False
 
             # Display the coordinates of the mouse position each time the user clicks
@@ -489,6 +526,13 @@ def main():
         if (keys[pygame.K_w] or keys[pygame.K_UP]) and player_ship.y - player_ship.player_velocity > 0:
             player_ship.y -= player_ship.player_velocity
 
+        # TEST
+        if (keys[pygame.K_h]):
+            print(high_score_file.readline())
+            print(high_score_file.read())
+            print(high_score)
+            
+            
         # Shoot lasers
         if keys[pygame.K_SPACE]:
             player_ship.shoot()
@@ -502,7 +546,7 @@ def main():
             
             # Check for player collision with a powerup
             if(powerup.check_collision(player_ship)):
-                if(isinstance(powerup, HealthPowerup)):
+                if(isinstance(powerup, healthPowerup)):
                     health_collect_sound = pygame.mixer.Sound(os.path.join("assets\mixkit-video-game-health-recharge-2837.wav"))
                     health_collect_sound.set_volume(.4)
                     health_collect_sound.play()
@@ -538,6 +582,16 @@ def main():
                 enemies.remove(enemy)
 
         player_ship.move_lasers(player_ship.laser_velocity, enemies)
+        
+    #(end while loop)
+    
+    # Set the high score
+    if (player_ship.score > high_score):
+        
+        high_score_file.write(f"{player_ship.score}")
+    else:
+         high_score_file.write(f"{high_score}")
+         high_score_file.close()
 
 
 main()  # Run the game!
