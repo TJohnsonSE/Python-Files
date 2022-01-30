@@ -280,7 +280,7 @@ class Powerup(Ship):
     def __init__(self, x, y, health=1):
         super().__init__(x, y, health)
 
-# Child class: 'HealthPowerup' inherits from parent class 'Powerup'; (Granchild of 'Ship')
+# Child class: 'HealthPowerup' inherits from parent class 'Powerup'; (Grandchild of 'Ship')
 class healthPowerup(Powerup):
     
     def __init__(self, x, y, health=1):
