@@ -143,7 +143,7 @@ class Ship:
 
             elif laser.collision(obj):
                 player_hit_sound = pygame.mixer.Sound(os.path.join(
-                    "assets\Sound\mixkit-small-hit-in-a-game-2072.wav"))
+                    "assets\Sounds\mixkit-small-hit-in-a-game-2072.wav"))
                 player_hit_sound.set_volume(.4)
                 player_hit_sound.play()
                 if isinstance(laser, Fireball):
@@ -432,7 +432,7 @@ def main():
 
     # Sound effects
     player_crash_sound = pygame.mixer.Sound(os.path.join(
-        "assets\mixkit-8-bit-bomb-explosion-2811.wav"))
+        "assets\Sounds\mixkit-8-bit-bomb-explosion-2811.wav"))
     player_crash_sound.set_volume(.4)
     high_score_file = open("space_invaders_score.txt", "r", 1)
     high_score_list = high_score_file.readlines()
@@ -524,7 +524,7 @@ def main():
 
             if played_game_over_sound == False:
                 game_over_sound_effect = pygame.mixer.Sound(os.path.join(
-                    "assets\mixkit-arcade-fast-game-over-233.wav"))
+                    "assets\Sounds\mixkit-arcade-fast-game-over-233.wav"))
                 played_game_over_sound = True
                 game_over_sound_effect.play()
                 time.sleep(1)
@@ -550,8 +550,9 @@ def main():
 
                 for alien in range(alien_wave_length):
 
-                    alien = Alien(random.randrange(150, WIDTH-150),
-                                  random.randrange(-250, -100), health=200)
+                    alien = Alien(random.randrange(50, WIDTH - 50),
+                                  random.randrange(-300, -50), health = 200)
+                    
                     aliens.append(alien)
 
             if level % 2 == 0:
@@ -651,7 +652,7 @@ def main():
             if(powerup.check_collision(player_ship)):
                 if(isinstance(powerup, healthPowerup)):
                     health_collect_sound = pygame.mixer.Sound(os.path.join(
-                        "assets\mixkit-video-game-health-recharge-2837.wav"))
+                        "assets\Sounds\mixkit-video-game-health-recharge-2837.wav"))
                     health_collect_sound.set_volume(.4)
                     health_collect_sound.play()
                 powerups.remove(powerup)
