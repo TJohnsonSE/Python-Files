@@ -54,6 +54,89 @@ BACKGROUND = pygame.transform.scale(pygame.image.load(
 # Classes
 #############################################################################
 
+# Animation Class: 'Explosion'
+
+class Explosion(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.sprites = []
+        self.sprites.append(pygame.image.load("Explosion_sheet1_00.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_01.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_02.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_03.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_04.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_05.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_06.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_07.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_08.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_09.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_10.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_11.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_12.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_13.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_14.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_15.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_16.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_17.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_18.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_19.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_20.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_21.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_22.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_23.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_24.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_25.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_26.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_27.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_28.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_29.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_30.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_31.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_32.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_33.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_34.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_35.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_36.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_37.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_38.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_39.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_40.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_41.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_42.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_43.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_44.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_45.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_46.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_47.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_48.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_49.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_50.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_51.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_52.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_53.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_54.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_55.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_56.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_57.png"))
+        self.sprites.append(pygame.image.load("Explosion_sheet1_58.png"))
+        self.current_sprite = 0
+        self.image = self.sprites[self.current_sprite]
+        
+        self.rect = self.image.get_rect()
+        self.rect.center = [x, y]
+        
+    def update(self):
+        self.current_sprite += 1
+            
+        if self.current_sprite >= len(self.sprites):
+            self.current_sprite = 0
+                
+        self.image = self.sprites[self.current_sprite]
+        
+    def draw(self, window):
+        window.blit(self.img, (self.x, self.y))
+    
+
 # Class: 'Laser'
 
 
@@ -85,6 +168,12 @@ class Laser:
 
 
 class Fireball(Laser):
+    def __init__(self, x, y, img):
+        super().__init__(x, y, img)
+        self.img = img
+        self.mask = pygame.mask.from_surface(self.img)
+
+class superBomb(Laser):
     def __init__(self, x, y, img):
         super().__init__(x, y, img)
         self.img = img
@@ -222,7 +311,7 @@ class playerShip(Ship):
     # method in that the velocity passed to the Laser.move() method needs to be negative for the laser to travel upwards.  It
     # also must check for collision with the 'objs' argument, which will generally be a list of enemy ship objects.
     def move_lasers(self, velocity, objs, objs2):
-
+        
         self.laser_cooldown()
 
         for laser in self.lasers:
@@ -246,8 +335,10 @@ class playerShip(Ship):
                         obj2.health -= 100
                         if obj2.health <= 0:
                             objs2.remove(obj2)
+                            self.score += 3
                         if laser in self.lasers:
                             self.lasers.remove(laser)
+                        
 
     def shoot(self):
 
@@ -362,6 +453,7 @@ class healthPowerup(Powerup):
     def move(self, velocity):
         self.y += velocity
 
+
 # Program Functions (Global scope)
 ##################################
 
@@ -425,11 +517,12 @@ def main():
     played_game_over_sound = False
     enemies = []
     powerups = []
+    bombs = []
     aliens = []
     enemy_wave_length = 0
     alien_wave_length = 1
     player_ship = playerShip.spawn_player(375, 650)
-
+    
     # Sound effects
     player_crash_sound = pygame.mixer.Sound(os.path.join(
         "assets\Sounds\mixkit-8-bit-bomb-explosion-2811.wav"))
@@ -457,13 +550,13 @@ def main():
 
         # Render the score to display
         display_score(WIN, player_ship.score)
-
+        
         # Render the high score to displa
         display_high_score(WIN, high_score)
 
         # Render the health bar to display
         display_healthbar(WIN, player_ship.health, player_ship)
-
+        
         # Render Alien healthbars to display
         for alien in aliens:
             display_healthbar(WIN, alien.health, alien)
@@ -513,7 +606,7 @@ def main():
 
             nonlocal played_game_over_sound
             nonlocal game_over_count
-
+            
             game_over_count += 1
 
             game_over_label = game_over_font.render(
@@ -579,7 +672,7 @@ def main():
 
         clock.tick(FPS)
         redraw_window()  # Update the window on every frame
-
+        
         # Game over check
         ##################
 
@@ -711,7 +804,7 @@ def main():
         player_ship.move_lasers(player_ship.laser_velocity, enemies, aliens)
 
     # (end while loop)
-
+    
     # Set the high score
     if (player_ship.score > high_score):
         high_score_file = open("space_invaders_score.txt", "w", 1)
