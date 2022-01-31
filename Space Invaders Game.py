@@ -96,7 +96,7 @@ class Ship:
     # Class Variables
     ################
     LASER_SOUND_EFFECT = pygame.mixer.Sound(
-        os.path.join("assets\laser-gun-19sf.mp3"))
+        os.path.join("assets\Sounds\laser-gun-19sf.mp3"))
     LASER_SOUND_EFFECT.set_volume(.2)
 
     # Cooldown will be equal to a quarter second (FPS/2)
@@ -143,7 +143,7 @@ class Ship:
 
             elif laser.collision(obj):
                 player_hit_sound = pygame.mixer.Sound(os.path.join(
-                    "assets\mixkit-small-hit-in-a-game-2072.wav"))
+                    "assets\Sound\mixkit-small-hit-in-a-game-2072.wav"))
                 player_hit_sound.set_volume(.4)
                 player_hit_sound.play()
                 if isinstance(laser, Fireball):
@@ -196,7 +196,7 @@ class playerShip(Ship):
 
     # The laser sound effect that the player ship object will use
     LASER_SOUND_EFFECT = pygame.mixer.Sound(
-        os.path.join("assets\laser-gun-19sf.mp3"))
+        os.path.join("assets\Sounds\laser-gun-19sf.mp3"))
     LASER_SOUND_EFFECT.set_volume(.2)
 
     player_velocity = 3.5
@@ -284,7 +284,7 @@ class playerShip(Ship):
 class enemyShip(Ship):
 
     # Class Variables
-    LASER_SOUND_EFFECT = pygame.mixer.Sound(os.path.join("assets\laser.mp3"))
+    LASER_SOUND_EFFECT = pygame.mixer.Sound(os.path.join("assets\Sounds\laser.mp3"))
     LASER_SOUND_EFFECT.set_volume(.2)
 
     ENEMY_VELOCITY = 1.6
@@ -316,7 +316,7 @@ class Alien(Ship):
 
     # Class variables
     LASER_SOUND_EFFECT = pygame.mixer.Sound(
-        os.path.join("assets", "Fireball+1.mp3"))
+        os.path.join("assets\Sounds", "Fireball+1.mp3"))
 
     ALIEN_VELOCITY = .5
 
