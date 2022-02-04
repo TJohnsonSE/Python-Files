@@ -58,26 +58,28 @@ class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.sprites = []
+        self.x = x
+        self.y = y
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_0.png")))
+            os.path.join("assets", "Explosion_sheet1_00.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_1.png")))
+            os.path.join("assets", "Explosion_sheet1_01.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_2.png")))
+            os.path.join("assets", "Explosion_sheet1_02.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_3.png")))
+            os.path.join("assets", "Explosion_sheet1_03.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_4.png")))
+            os.path.join("assets", "Explosion_sheet1_04.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_5.png")))
+            os.path.join("assets", "Explosion_sheet1_05.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_6.png")))
+            os.path.join("assets", "Explosion_sheet1_06.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_7.png")))
+            os.path.join("assets", "Explosion_sheet1_07.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_8.png")))
+            os.path.join("assets", "Explosion_sheet1_08.png")))
         self.sprites.append(pygame.image.load(
-            os.path.join("assets", "Explosion_sheet1_9.png")))
+            os.path.join("assets", "Explosion_sheet1_09.png")))
         self.sprites.append(pygame.image.load(
             os.path.join("assets", "Explosion_sheet1_10.png")))
         self.sprites.append(pygame.image.load(
@@ -207,21 +209,25 @@ class Explosion(pygame.sprite.Sprite):
         self.sprites.append(pygame.image.load(
             os.path.join("assets", "Explosion_sheet1_73.png")))
         self.current_sprite = 0
-        self.image = self.sprites[self.current_sprite]
 
-        self.rect = self.image.get_rect()
-        self.rect.center = [x, y]
+        self.img = self.sprites[self.current_sprite]
 
+        self.rect = self.img.get_rect()
+        
+        
+    # Method returns 1 if the animation cycles through every sprite, to prevent multiple animations playing
     def update(self):
+
         self.current_sprite += 1
 
         if self.current_sprite >= len(self.sprites):
             self.current_sprite = 0
+            return 1
 
-        self.image = self.sprites[self.current_sprite]
+        self.img = self.sprites[self.current_sprite]
 
     def draw(self, window):
-        window.blit(self.img, (self.x, self.y))
+        window.blit(self.img, (self.x/2, self.y/2))
 
 
 # Class: 'Laser'
@@ -267,7 +273,7 @@ class superBomb(Laser):
         super().__init__(x, y, img)
         self.img = img
         self.mask = pygame.mask.from_surface(self.img)
-
+        
 # Parent class: 'Ship'
 
 
@@ -383,6 +389,7 @@ class playerShip(Ship):
     player_velocity = 3.5
     super_bomb_count = []
     readied_bombs = []
+    explosions = []
     lives = 5
     score = 0
 
@@ -401,39 +408,52 @@ class playerShip(Ship):
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
 
-    # Method move_lasers(velocity, objs): Overridden method of parent 'Ship' class.  This method differs from the parent
-    # method in that the velocity passed to the Laser.move() method needs to be negative for the laser to travel upwards.  It
-    # also must check for collision with the 'objs' argument, which will generally be a list of enemy ship objects.
-    def move_lasers(self, velocity, objs, objs2):
-
-        self.laser_cooldown()
+    def move_bombs(self, velocity, objs, objs2):
 
         for bomb in self.readied_bombs:
             bomb.move(-velocity)
 
             if bomb.off_screen(HEIGHT):
                 self.readied_bombs.remove(bomb)
-            
+
             else:
-                
-                for obj in objs:
-                    if bomb.collision(obj):
-                        for enemy in objs:
-                            if ((obj.x + 50) >= (enemy.x) and (obj.y + 50) >= (enemy.y)) or ((obj.x + 50) >= (enemy.x) and (obj.y - 50) <= (enemy.y)) or ((obj.x - 50) <= (enemy.x) and (obj.y + 50) >= (enemy.y)) or ((obj.x - 50) <= (enemy.x) and (obj.y - 50) <= (enemy.y)):
-                                objs.remove(enemy)
-                                self.score += 1
-                        if obj in objs:
-                            objs.remove(obj)
-                        self.score += 1
-                        if bomb in self.readied_bombs:
-                            self.readied_bombs.remove(bomb)
+
+                for enemy in objs:
+                    if bomb.collision(enemy):
+                        explosion = Explosion(
+                            enemy.x, enemy.y)
+                        self.explosions.append(explosion)
+
                         
-                for obj2 in objs2:
-                    if bomb.collision(obj2):
-                        objs.remove(obj2)
+                        if enemy in objs:
+                            objs.remove(enemy)
                         self.score += 1
+                        
+                        
                         if bomb in self.readied_bombs:
                             self.readied_bombs.remove(bomb)
+
+                for alien in objs2:
+                    if bomb.collision(alien):
+
+                        explosion = Explosion(
+                            alien.x, alien.y - 10)
+                        self.explosions.append(explosion)
+                            
+                        if alien in objs2:
+                            objs2.remove(alien)
+                        self.score += 3
+                        
+                        if bomb in self.readied_bombs:
+                            self.readied_bombs.remove(bomb)
+
+    # Method move_lasers(velocity, objs): Overridden method of parent 'Ship' class.  This method differs from the parent
+    # method in that the velocity passed to the Laser.move() method needs to be negative for the laser to travel upwards.  It
+    # also must check for collision with the 'objs' argument, which will generally be a list of enemy ship objects.
+
+    def move_lasers(self, velocity, objs, objs2):
+
+        self.laser_cooldown()
 
         for laser in self.lasers:
             laser.move(-velocity)
@@ -442,20 +462,20 @@ class playerShip(Ship):
                 self.lasers.remove(laser)
 
             else:
-                for obj in objs:
-                    if laser.collision(obj):
-                        obj.health -= 100
-                        if obj.health <= 0:
-                            objs.remove(obj)
+                for enemy in objs:
+                    if laser.collision(enemy):
+                        enemy.health -= 100
+                        if enemy.health <= 0:
+                            objs.remove(enemy)
                             self.score += 1
                         if laser in self.lasers:
                             self.lasers.remove(laser)
 
-                for obj2 in objs2:
-                    if laser.collision(obj2):
-                        obj2.health -= 100
-                        if obj2.health <= 0:
-                            objs2.remove(obj2)
+                for alien in objs2:
+                    if laser.collision(alien):
+                        alien.health -= 100
+                        if alien.health <= 0:
+                            objs2.remove(alien)
                             self.score += 3
                         if laser in self.lasers:
                             self.lasers.remove(laser)
@@ -474,16 +494,16 @@ class playerShip(Ship):
                 self.cool_down_counter += 1
 
     def deploy_bomb(self):
-        
-        if self.cool_down_counter == 0:
-            if self.y > 0:
-                if len(self.super_bomb_count) >= 1:
-                    bomb = self.super_bomb_count[len(self.super_bomb_count) - 1]
-                    self.readied_bombs.append(superBomb(self.x, self.y, pygame.transform.flip(self.super_bomb_count[len(self.super_bomb_count) - 1].img, False, True)))
-                    self.super_bomb_count.remove(bomb)
-                    self.cool_down_counter += 1
-                
-    
+
+        if self.cool_down_counter == 0 and self.y > 0:
+            if len(self.super_bomb_count) >= 1:
+                bomb = self.super_bomb_count[len(
+                    self.super_bomb_count) - 1]
+                self.readied_bombs.append(superBomb(self.x, self.y, pygame.transform.flip(
+                    self.super_bomb_count[len(self.super_bomb_count) - 1].img, False, True)))
+                self.super_bomb_count.remove(bomb)
+                self.cool_down_counter += 1
+
     def draw_bombs(self, window):
         for bomb in self.readied_bombs:
             bomb.draw(window)
@@ -615,38 +635,43 @@ class superBombPowerup(Powerup):
 # Program Functions (Global scope)
 ##################################
 
+def display_HUD(window, ship, score, health, high_score):
 
-def cooldown(self):
+    def display_power_bombs_bar(window, ship):
 
-    if self.cool_down_counter >= self.COOLDOWN:
-        self.cool_down_counter = 0
+        display_scalar = 0
+        mini_bomb_image = pygame.transform.scale(SUPERBOMB, (25, 25))
 
-    if self.cool_down_counter > 0:
-        self.cool_down_counter += 1
+        for bomb in ship.super_bomb_count:
 
+            if display_scalar == 0:
 
-def collide(obj1, obj2):
-    offset_x = obj2.x - obj1.x
-    offset_y = obj2.y - obj1.y
-    return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
+                window.blit(mini_bomb_image, (ship.x + 15, ship.y + 125))
 
+            else:
+                window.blit(mini_bomb_image, (ship.x + 15 +
+                                              (display_scalar * 20), ship.y + 125))
 
-def display_power_bombs_bar(window, ship):
+            display_scalar += 1
 
-    display_scalar = 0
-    mini_bomb_image = pygame.transform.scale(SUPERBOMB, (25, 25))
+    def display_score(window, score):
+        score_font = pygame.font.SysFont("onyx", 30)
+        score_label = score_font.render(f"Score: {score}", 1, (255, 255, 255))
+        window.blit(score_label, (10, 40))
+        return score_label
 
-    for bomb in ship.super_bomb_count:
+    def display_high_score(window, high_score):
+        high_score_font = pygame.font.SysFont("onyx", 30)
+        high_score_label = high_score_font.render(
+            f"High Score: {high_score}", 1, (132, 233, 229))
+        window.blit(high_score_label,
+                    (WIDTH - high_score_label.get_width() - 10, 40))
 
-        if display_scalar == 0:
+    display_power_bombs_bar(window, ship)
 
-            window.blit(mini_bomb_image, (ship.x + 15, ship.y + 125))
+    display_score(window, score)
 
-        else:
-            window.blit(mini_bomb_image, (ship.x + 15 +
-                        (display_scalar * 20), ship.y + 125))
-
-        display_scalar += 1
+    display_high_score(window, high_score)
 
 
 def display_healthbar(window, health, ship):
@@ -661,19 +686,24 @@ def display_healthbar(window, health, ship):
     pygame.draw.rect(window, (0, 255, 0), health_rect)
 
 
-def display_score(window, score):
-    score_font = pygame.font.SysFont("onyx", 30)
-    score_label = score_font.render(f"Score: {score}", 1, (255, 255, 255))
-    window.blit(score_label, (10, 40))
-    return score_label
+def cooldown(self):
+
+    if self.cool_down_counter >= self.COOLDOWN:
+        self.cool_down_counter = 0
+
+    if self.cool_down_counter > 0:
+        self.cool_down_counter += 1
 
 
-def display_high_score(window, high_score):
-    high_score_font = pygame.font.SysFont("onyx", 30)
-    high_score_label = high_score_font.render(
-        f"High Score: {high_score}", 1, (132, 233, 229))
-    window.blit(high_score_label,
-                (WIDTH - high_score_label.get_width() - 10, 40))
+def display_explosions(window, explosion):
+    explosion.draw(window)
+    explosion.update()
+
+
+def collide(obj1, obj2):
+    offset_x = obj2.x - obj1.x
+    offset_y = obj2.y - obj1.y
+    return obj1.mask.overlap(obj2.mask, (offset_x, offset_y)) != None
 
 # Function main(): Function contains logic for running the main game
 
@@ -682,330 +712,343 @@ def main():
 
     # Game variables
     ################
+    def run():
+        run = True
+        FPS = 60  # Try to keep this at 60 or above, otherwise the game will update less frequently
+        clock = pygame.time.Clock()
+        level = 0
+        game_over_count = 0
+        main_font = pygame.font.SysFont("onyx", 30)
+        game_over_font = pygame.font.SysFont("onyx", 50)
+        pause_game_font = pygame.font.SysFont("onyx", 50)
+        played_game_over_sound = False
+        enemies = []
+        powerups = []
+        aliens = []
+        enemy_wave_length = 0
+        alien_wave_length = 1
+        player_ship = playerShip.spawn_player(375, 650)
 
-    run = True
-    FPS = 60  # Try to keep this at 60 or above, otherwise the game will update less frequently
-    clock = pygame.time.Clock()
-    level = 0
-    game_over_count = 0
-    main_font = pygame.font.SysFont("onyx", 30)
-    game_over_font = pygame.font.SysFont("onyx", 50)
-    pause_game_font = pygame.font.SysFont("onyx", 50)
-    played_game_over_sound = False
-    enemies = []
-    powerups = []
-    aliens = []
-    enemy_wave_length = 0
-    alien_wave_length = 1
-    player_ship = playerShip.spawn_player(375, 650)
+        # Sound effects
+        player_crash_sound = pygame.mixer.Sound(os.path.join(
+            "assets\Sounds\mixkit-8-bit-bomb-explosion-2811.wav"))
+        player_crash_sound.set_volume(.4)
+        high_score_file = open("space_invaders_score.txt", "r", 1)
+        high_score_list = high_score_file.readlines()
+        high_score = int(high_score_list[0])
+        high_score_file.close()
 
-    # Sound effects
-    player_crash_sound = pygame.mixer.Sound(os.path.join(
-        "assets\Sounds\mixkit-8-bit-bomb-explosion-2811.wav"))
-    player_crash_sound.set_volume(.4)
-    high_score_file = open("space_invaders_score.txt", "r", 1)
-    high_score_list = high_score_file.readlines()
-    high_score = int(high_score_list[0])
-    high_score_file.close()
+        # Method redraw_window(): (0 arguments) This function will update the window by redrawing the background
 
-    # Method redraw_window(): (0 arguments) This function will update the window by redrawing the background
+        def redraw_window():
 
-    def redraw_window():
+            # Render the background
+            WIN.blit(BACKGROUND, (0, 0))
 
-        # Render the background
-        WIN.blit(BACKGROUND, (0, 0))
+            # Initialize text; color: (255,255,255) == white
+            lives_label = main_font.render(
+                f"Lives: {player_ship.lives}", 1, (255, 255, 255))
+            level_label = main_font.render(
+                f"Level: {level}", 1, (255, 255, 255))
 
-        # Initialize text; color: (255,255,255) == white
-        lives_label = main_font.render(
-            f"Lives: {player_ship.lives}", 1, (255, 255, 255))
-        level_label = main_font.render(f"Level: {level}", 1, (255, 255, 255))
+            # Render text to display
+            WIN.blit(lives_label, (10, 10))
+            WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
 
-        # Render text to display
-        WIN.blit(lives_label, (10, 10))
-        WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
+            # Render all elements of the HUD to the display
+            display_HUD(WIN, player_ship, player_ship.score,
+                        player_ship.health, high_score)
 
-        # Render bomb count to display
-        display_power_bombs_bar(WIN, player_ship)
+            # TEST!!!!! Render explosions TEST!!!!!!
 
-        # Render the score to display
-        display_score(WIN, player_ship.score)
+            for explosion in player_ship.explosions:
+                display_explosions(WIN, explosion)
 
-        # Render the high score to displa
-        display_high_score(WIN, high_score)
+                for enemy in enemies:
+                    if abs(enemy.x - explosion.x) <= 100 and abs(enemy.y - explosion.y <= 100):
+                        if enemy in enemies:
+                            enemies.remove(enemy)
+                if explosion.update() == 1:
+                    player_ship.explosions.remove(explosion)
 
-        # Render the health bar to display
-        display_healthbar(WIN, player_ship.health, player_ship)
+            # Render player healthbar to display
+            display_healthbar(WIN, player_ship.health, player_ship)
 
-        # Render Alien healthbars to display
-        for alien in aliens:
-            display_healthbar(WIN, alien.health, alien)
+            # Render Alien healthbars to display
+            for alien in aliens:
+                display_healthbar(WIN, alien.health, alien)
 
-        # Render the powerups to display
-        for powerup in powerups:
-            powerup.draw_ship(WIN)
+            # Render the powerups to display
+            for powerup in powerups:
+                powerup.draw_ship(WIN)
 
-        # Render the aliens to display
-        for alien in aliens:
-            alien.draw_ship(WIN)
-            alien.draw_lasers(WIN)
+            # Render the aliens to display
+            for alien in aliens:
+                alien.draw_ship(WIN)
+                alien.draw_lasers(WIN)
 
-        # Render the enemies to display
-        for enemy in enemies:
-            enemy.draw_ship(WIN)
-            enemy.draw_lasers(WIN)
+            # Render the enemies to display
+            for enemy in enemies:
+                enemy.draw_ship(WIN)
+                enemy.draw_lasers(WIN)
 
-        # Render the player ship and lasers to display
-        player_ship.draw_ship(WIN)
-        player_ship.draw_lasers(WIN)
-        player_ship.draw_bombs(WIN)
+            # Render the player ship and lasers to display
+            player_ship.draw_ship(WIN)
+            player_ship.draw_lasers(WIN)
+            player_ship.draw_bombs(WIN)
 
-        pygame.display.update()
-
-    # Function pause_game: takes one argument, which is a boolean value with a value of 'True' if the escape key is pressed
-    # or 'False' if it is not
-    def pause_game(keys_dict):
-
-        print("Game paused")
-
-        print(f"Escape = {keys[pygame.K_ESCAPE]}")
-
-        player_ship.player_velocity = 0
-        enemy_velocity = 0
-
-        pause_game_label = pause_game_font.render(
-            f"PAUSED", 1, (255, 255, 255))
-
-        WIN.blit(pause_game_label,
-                 ((WIDTH/2 - pause_game_label.get_width()/2), HEIGHT/2))
-
-        pygame.display.update()
-
-    def game_over(health, lives):
-
-        if (health <= 0) or (lives == 0):
-
-            nonlocal played_game_over_sound
-            nonlocal game_over_count
-
-            game_over_count += 1
-
-            game_over_label = game_over_font.render(
-                f"GAME OVER", 1, (255, 0, 0))
-            WIN.blit(game_over_label, (WIDTH/2 -
-                                       game_over_label.get_width()/2, 375))
             pygame.display.update()
 
-            if played_game_over_sound == False:
-                game_over_sound_effect = pygame.mixer.Sound(os.path.join(
-                    "assets\Sounds\mixkit-arcade-fast-game-over-233.wav"))
-                played_game_over_sound = True
-                game_over_sound_effect.play()
-                time.sleep(1)
-                game_over_sound_effect.stop()
-            return True
+        # Function pause_game: takes one argument, which is a boolean value with a value of 'True' if the escape key is pressed
+        # or 'False' if it is not
+        def pause_game(keys_dict):
 
-        else:
-            return False
+            print("Game paused")
 
-    def next_level(level, enemies, enemy_wave_length, aliens, alien_wave_length):
-        if len(enemies) == 0 and len(aliens) == 0:
+            print(f"Escape = {keys[pygame.K_ESCAPE]}")
 
-            level += 1
+            player_ship.player_velocity = 0
+            enemy_velocity = 0
 
-            if superBombPowerup.random_spawn_chance() == True:
-                super_bomb = superBombPowerup(
-                    random.randrange(50, WIDTH - 100), -10, None)
-                powerups.append(super_bomb)
+            pause_game_label = pause_game_font.render(
+                f"PAUSED", 1, (255, 255, 255))
 
-            if level < 3:
-                enemy_wave_length += 3
+            WIN.blit(pause_game_label,
+                     ((WIDTH/2 - pause_game_label.get_width()/2), HEIGHT/2))
+
+            pygame.display.update()
+
+        def game_over(health, lives):
+
+            if (health <= 0) or (lives == 0):
+
+                nonlocal played_game_over_sound
+                nonlocal game_over_count
+
+                game_over_count += 1
+
+                game_over_label = game_over_font.render(
+                    f"GAME OVER", 1, (255, 0, 0))
+                WIN.blit(game_over_label, (WIDTH/2 -
+                                           game_over_label.get_width()/2, 375))
+                pygame.display.update()
+
+                if played_game_over_sound == False:
+                    game_over_sound_effect = pygame.mixer.Sound(os.path.join(
+                        "assets\Sounds\mixkit-arcade-fast-game-over-233.wav"))
+                    played_game_over_sound = True
+                    game_over_sound_effect.play()
+                    time.sleep(1)
+                    game_over_sound_effect.stop()
+                return True
 
             else:
-                enemy_wave_length += 1
+                return False
 
-            # 10% chance to create a new Alien
-            if random.randrange(0, 100) >= 20:
+        def next_level(level, enemies, enemy_wave_length, aliens, alien_wave_length):
+            if len(enemies) == 0 and len(aliens) == 0:
 
-                for alien in range(alien_wave_length):
+                level += 1
 
-                    alien = Alien(random.randrange(50, WIDTH - 50),
-                                  random.randrange(-300, -50), health=200)
+                if superBombPowerup.random_spawn_chance() == True:
+                    super_bomb = superBombPowerup(
+                        random.randrange(50, WIDTH - 100), -10, None)
+                    powerups.append(super_bomb)
 
-                    aliens.append(alien)
+                if level < 3:
+                    enemy_wave_length += 3
 
-            if level % 2 == 0:
+                else:
+                    enemy_wave_length += 1
 
-                alien_wave_length += 1
+                # 10% chance to create a new Alien
+                if random.randrange(0, 100) >= 20:
 
-            if level % 3 == 0:
-                health_heart = healthPowerup(
-                    random.randrange(100, WIDTH - 100), -20, None)
-                powerups.append(health_heart)
+                    for alien in range(alien_wave_length):
 
-            for enemy in range(enemy_wave_length):
-                enemy = enemyShip(random.randrange(
-                    50, WIDTH-50), random.randrange(-1000, -100), random.choice(["red", "blue", "green"]))
-                enemies.append(enemy)
+                        alien = Alien(random.randrange(50, WIDTH - 50),
+                                      random.randrange(-300, -50), health=200)
 
-        return level, enemies, enemy_wave_length, aliens, alien_wave_length
+                        aliens.append(alien)
 
-    # RUN GAME
-    ##########
+                if level % 2 == 0:
 
-    # While loop runs the game logic until the user quits
-    while run == True:
+                    alien_wave_length += 1
 
-        clock.tick(FPS)
-        redraw_window()  # Update the window on every frame
+                if level % 3 == 0:
+                    health_heart = healthPowerup(
+                        random.randrange(100, WIDTH - 100), -20, None)
+                    powerups.append(health_heart)
 
-        # Game over check
-        ##################
+                for enemy in range(enemy_wave_length):
+                    enemy = enemyShip(random.randrange(
+                        50, WIDTH-50), random.randrange(-1000, -100), random.choice(["red", "blue", "green"]))
+                    enemies.append(enemy)
 
-        # If the user runs out of lives or player health hits 0, exit the game logic loop (player loses, exit the game)
-        if game_over(player_ship.get_health(), player_ship.get_lives()):
+            return level, enemies, enemy_wave_length, aliens, alien_wave_length
 
-            # Wait 3 seconds
-            if game_over_count > FPS * 2:
-                run = False
-            else:
-                continue
+        # RUN GAME
+        ##########
 
-        # Next level check
-        ##################
+        # While loop runs the game logic until the user quits
+        while run == True:
 
-        # Increment the 'level' by one every time all enemies are eliminated
-        level, enemies, enemy_wave_length, aliens, alien_wave_length = next_level(
-            level, enemies, enemy_wave_length, aliens, alien_wave_length)
+            clock.tick(FPS)
+            redraw_window()  # Update the window on every frame
 
-        # Check for user quitting the game, or exiting the window
-        for event in pygame.event.get():
+            # Game over check
+            ##################
 
-            if event.type == pygame.QUIT:  # If the user quits, then set 'run' flag to False to exit game run loop
-                player_ship.score = 0
-                run = False
+            # If the user runs out of lives or player health hits 0, exit the game logic loop (player loses, exit the game)
+            if game_over(player_ship.get_health(), player_ship.get_lives()):
 
-            # Display the coordinates of the mouse position each time the user clicks
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                print("Mouse cursor is at " + str(pygame.mouse.get_pos()))
+                # Wait 3 seconds
+                if game_over_count > FPS * 2:
+                    run = False
+                else:
+                    continue
 
-        # Create a dictionary that will map keys pressed to a True or False value
-        keys = pygame.key.get_pressed()
+            # Next level check
+            ##################
 
-        # Player movement; player cannot move off of the screen at all
+            # Increment the 'level' by one every time all enemies are eliminated
+            level, enemies, enemy_wave_length, aliens, alien_wave_length = next_level(
+                level, enemies, enemy_wave_length, aliens, alien_wave_length)
 
-        # Move player_ship left (subtract from x value)
-        if (keys[pygame.K_a] or keys[pygame.K_LEFT]) and player_ship.x - player_ship.player_velocity > -13:
-            player_ship.x -= player_ship.player_velocity
+            # Check for user quitting the game, or exiting the window
+            for event in pygame.event.get():
 
-        # Move player_ship down (add to y value)
-        if (keys[pygame.K_s] or keys[pygame.K_DOWN]) and player_ship.y + player_ship.player_velocity < HEIGHT - player_ship.get_height():
-            player_ship.y += player_ship.player_velocity
+                if event.type == pygame.QUIT:  # If the user quits, then set 'run' flag to False to exit game run loop
+                    player_ship.score = 0
+                    run = False
 
-        # Move player_ship right (add to x value)
-        if (keys[pygame.K_d] or keys[pygame.K_RIGHT]) and player_ship.x + player_ship.player_velocity < WIDTH - player_ship.get_width() + 13:
-            player_ship.x += player_ship.player_velocity
+                # Display the coordinates of the mouse position each time the user clicks
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    print("Mouse cursor is at " + str(pygame.mouse.get_pos()))
 
-        # Move player_ship up (subtract from y value)
-        if (keys[pygame.K_w] or keys[pygame.K_UP]) and player_ship.y - player_ship.player_velocity > 0:
-            player_ship.y -= player_ship.player_velocity
+            # Create a dictionary that will map keys pressed to a True or False value
+            keys = pygame.key.get_pressed()
 
-        # TEST
-        if (keys[pygame.K_h]):
-            print(high_score_file.readline())
-            print(high_score_file.read())
-            print(high_score)
+            # Player movement; player cannot move off of the screen at all
 
-        # Shoot lasers
-        if keys[pygame.K_SPACE]:
-            player_ship.shoot()
+            # Move player_ship left (subtract from x value)
+            if (keys[pygame.K_a] or keys[pygame.K_LEFT]) and player_ship.x - player_ship.player_velocity > -13:
+                player_ship.x -= player_ship.player_velocity
 
-        # Shoot superBombs
-        if keys[pygame.K_LSHIFT]:
-            player_ship.deploy_bomb()
+            # Move player_ship down (add to y value)
+            if (keys[pygame.K_s] or keys[pygame.K_DOWN]) and player_ship.y + player_ship.player_velocity < HEIGHT - player_ship.get_height():
+                player_ship.y += player_ship.player_velocity
 
-        # Pause game
-        if keys[pygame.K_ESCAPE]:
-            pause_game(keys)
+            # Move player_ship right (add to x value)
+            if (keys[pygame.K_d] or keys[pygame.K_RIGHT]) and player_ship.x + player_ship.player_velocity < WIDTH - player_ship.get_width() + 13:
+                player_ship.x += player_ship.player_velocity
 
-        # Check powerup collision with player
-        for powerup in powerups:
+            # Move player_ship up (subtract from y value)
+            if (keys[pygame.K_w] or keys[pygame.K_UP]) and player_ship.y - player_ship.player_velocity > 0:
+                player_ship.y -= player_ship.player_velocity
 
-            # Check for player collision with a powerup
-            if(powerup.check_collision(player_ship)):
+            # TEST
+            if (keys[pygame.K_h]):
+                print(high_score_file.readline())
+                print(high_score_file.read())
+                print(high_score)
 
-                if(isinstance(powerup, healthPowerup)):
-                    health_collect_sound = pygame.mixer.Sound(os.path.join(
-                        "assets\Sounds\mixkit-video-game-health-recharge-2837.wav"))
-                    health_collect_sound.set_volume(.4)
-                    health_collect_sound.play()
+            # Shoot lasers
+            if keys[pygame.K_SPACE]:
+                player_ship.shoot()
 
-                if (isinstance(powerup, superBombPowerup)):
-                    power_bomb_collect_sound = pygame.mixer.Sound(
-                        os.path.join("assets\Sounds\Powerup_collect1.mp3"))
-                    power_bomb_collect_sound.play()
+            # Shoot superBombs
+            if keys[pygame.K_LSHIFT]:
+                player_ship.deploy_bomb()
 
-                powerups.remove(powerup)
+            # Pause game
+            if keys[pygame.K_ESCAPE]:
+                pause_game(keys)
 
-            powerup.move(powerup.VELOCITY)
+            # Check powerup collision with player
+            for powerup in powerups:
 
-        # Alien movement
-        for alien in aliens:
+                # Check for player collision with a powerup
+                if(powerup.check_collision(player_ship)):
 
-            # Check for player colliding with an alien
-            if (player_ship.check_collision(alien)):
-                player_ship.score += 5
-                player_crash_sound.play()
-                player_ship.health -= 50
-                aliens.remove(alien)
+                    if(isinstance(powerup, healthPowerup)):
+                        health_collect_sound = pygame.mixer.Sound(os.path.join(
+                            "assets\Sounds\mixkit-video-game-health-recharge-2837.wav"))
+                        health_collect_sound.set_volume(.4)
+                        health_collect_sound.play()
 
-            # Move alien
-            alien.move(alien.ALIEN_VELOCITY)
+                    if (isinstance(powerup, superBombPowerup)):
+                        power_bomb_collect_sound = pygame.mixer.Sound(
+                            os.path.join("assets\Sounds\Powerup_collect1.mp3"))
+                        power_bomb_collect_sound.play()
 
-            # Move the fireballs that the alien shoots
-            if alien.random_fireball_chance() >= 985:
+                    powerups.remove(powerup)
 
-                alien.shoot()
+                powerup.move(powerup.VELOCITY)
 
-            alien.move_lasers(alien.laser_velocity, player_ship)
+            # Alien movement
+            for alien in aliens:
 
-            if alien.y >= 750:
-                player_ship.lives -= 2
-                aliens.remove(alien)
+                # Check for player colliding with an alien
+                if (player_ship.check_collision(alien)):
+                    player_ship.score += 5
+                    player_crash_sound.play()
+                    player_ship.health -= 50
+                    aliens.remove(alien)
 
-        # Enemy movement
-        for enemy in enemies:
+                # Move alien
+                alien.move(alien.ALIEN_VELOCITY)
 
-            # Check for player colliding with an enemy
-            if (player_ship.check_collision(enemy)):
-                player_ship.score += 1
-                player_crash_sound.play()
-                player_ship.health -= 30
-                enemies.remove(enemy)
+                # Move the fireballs that the alien shoots
+                if alien.random_fireball_chance() >= 985:
 
-            # Move enemy by 'enemy_velocity'
-            enemy.move(enemy.ENEMY_VELOCITY)
+                    alien.shoot()
 
-            # Move the lasers that an enemy shoots
-            if enemy.random_laser_chance() >= 995:
-                enemy.shoot()
+                alien.move_lasers(alien.laser_velocity, player_ship)
 
-            enemy.move_lasers(enemy.laser_velocity, player_ship)
+                if alien.y >= 750:
+                    player_ship.lives -= 2
+                    aliens.remove(alien)
 
-            # If the enemy object reaches the bottom of the screen, remove a life from the player and remove that
-            # enemy from the game
-            if enemy.y >= 750:
-                player_ship.lives -= 1
-                enemies.remove(enemy)
+            # Enemy movement
+            for enemy in enemies:
 
-        player_ship.move_lasers(player_ship.laser_velocity, enemies, aliens)
+                # Check for player colliding with an enemy
+                if (player_ship.check_collision(enemy)):
+                    player_ship.score += 1
+                    player_crash_sound.play()
+                    player_ship.health -= 30
+                    enemies.remove(enemy)
 
-    # (end while loop)
+                # Move enemy by 'enemy_velocity'
+                enemy.move(enemy.ENEMY_VELOCITY)
 
-    # Set the high score
-    if (player_ship.score > high_score):
-        high_score_file = open("space_invaders_score.txt", "w", 1)
-        high_score_file.write(f"{player_ship.score}")
-        high_score_file.close()
+                # Move the lasers that an enemy shoots
+                if enemy.random_laser_chance() >= 995:
+                    enemy.shoot()
+
+                enemy.move_lasers(enemy.laser_velocity, player_ship)
+
+                # If the enemy object reaches the bottom of the screen, remove a life from the player and remove that
+                # enemy from the game
+                if enemy.y >= 750:
+                    player_ship.lives -= 1
+                    enemies.remove(enemy)
+
+            player_ship.move_lasers(
+                player_ship.laser_velocity, enemies, aliens)
+
+            player_ship.move_bombs(player_ship.laser_velocity, enemies, aliens)
+
+        # (end while loop)
+
+        # Set the high score
+        if (player_ship.score > high_score):
+            high_score_file = open("space_invaders_score.txt", "w", 1)
+            high_score_file.write(f"{player_ship.score}")
+            high_score_file.close()
+
+    run()
 
 
 main()  # Run the game!
