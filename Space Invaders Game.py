@@ -60,6 +60,8 @@ class Explosion(pygame.sprite.Sprite):
         self.sprites = []
         self.x = x
         self.y = y
+        self.explosion_sound = pygame.mixer.Sound(os.path.join("assets\Sounds", "mixkit-arcade-game-explosion-2759.wav"))
+        
         self.sprites.append(pygame.image.load(
             os.path.join("assets", "Explosion_sheet1_00.png")))
         self.sprites.append(pygame.image.load(
@@ -407,9 +409,9 @@ class playerShip(Ship):
         # Create a mask that fits the "ship_img" image pixel perfectly for collision
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
-
-    def move_bombs(self, velocity, objs, objs2):
-
+    
+    def move_bombs(self, velocity, objs):
+                        
         for bomb in self.readied_bombs:
             bomb.move(-velocity)
 
@@ -423,35 +425,29 @@ class playerShip(Ship):
                         explosion = Explosion(
                             enemy.x, enemy.y)
                         self.explosions.append(explosion)
+                        explosion.explosion_sound.play()
 
+                        def explode_enemies(self, enemies):
+                            for enemy in enemies:
+                                if abs(enemy.x - explosion.x) <= 100 and abs(enemy.y - explosion.y <= 100):
+                                    if enemy in enemies:
+                                        enemies.remove(enemy)
+                                        if isinstance(enemy, Alien):
+                                            self.score += 3
+                                        else:
+                                            self.score += 1
                         
-                        if enemy in objs:
-                            objs.remove(enemy)
-                        self.score += 1
-                        
-                        
-                        if bomb in self.readied_bombs:
-                            self.readied_bombs.remove(bomb)
-
-                for alien in objs2:
-                    if bomb.collision(alien):
-
-                        explosion = Explosion(
-                            alien.x, alien.y - 10)
-                        self.explosions.append(explosion)
-                            
-                        if alien in objs2:
-                            objs2.remove(alien)
-                        self.score += 3
+                        explode_enemies(self, objs)
                         
                         if bomb in self.readied_bombs:
                             self.readied_bombs.remove(bomb)
 
+            
     # Method move_lasers(velocity, objs): Overridden method of parent 'Ship' class.  This method differs from the parent
     # method in that the velocity passed to the Laser.move() method needs to be negative for the laser to travel upwards.  It
     # also must check for collision with the 'objs' argument, which will generally be a list of enemy ship objects.
 
-    def move_lasers(self, velocity, objs, objs2):
+    def move_lasers(self, velocity, objs):
 
         self.laser_cooldown()
 
@@ -467,11 +463,14 @@ class playerShip(Ship):
                         enemy.health -= 100
                         if enemy.health <= 0:
                             objs.remove(enemy)
-                            self.score += 1
+                            if isinstance(enemy, Alien):
+                                self.score += 3
+                            else:    
+                                self.score += 1
                         if laser in self.lasers:
                             self.lasers.remove(laser)
 
-                for alien in objs2:
+                """for alien in objs2:
                     if laser.collision(alien):
                         alien.health -= 100
                         if alien.health <= 0:
@@ -479,6 +478,7 @@ class playerShip(Ship):
                             self.score += 3
                         if laser in self.lasers:
                             self.lasers.remove(laser)
+                            """
 
     def shoot(self):
 
@@ -724,7 +724,6 @@ def main():
         played_game_over_sound = False
         enemies = []
         powerups = []
-        aliens = []
         enemy_wave_length = 0
         alien_wave_length = 1
         player_ship = playerShip.spawn_player(375, 650)
@@ -759,15 +758,10 @@ def main():
             display_HUD(WIN, player_ship, player_ship.score,
                         player_ship.health, high_score)
 
-            # TEST!!!!! Render explosions TEST!!!!!!
-
+            # Render explosions to display
             for explosion in player_ship.explosions:
                 display_explosions(WIN, explosion)
-
-                for enemy in enemies:
-                    if abs(enemy.x - explosion.x) <= 100 and abs(enemy.y - explosion.y <= 100):
-                        if enemy in enemies:
-                            enemies.remove(enemy)
+                    
                 if explosion.update() == 1:
                     player_ship.explosions.remove(explosion)
 
@@ -775,17 +769,13 @@ def main():
             display_healthbar(WIN, player_ship.health, player_ship)
 
             # Render Alien healthbars to display
-            for alien in aliens:
-                display_healthbar(WIN, alien.health, alien)
+            for enemy in enemies:
+                if isinstance(enemy, Alien):
+                    display_healthbar(WIN, enemy.health, enemy)
 
             # Render the powerups to display
             for powerup in powerups:
                 powerup.draw_ship(WIN)
-
-            # Render the aliens to display
-            for alien in aliens:
-                alien.draw_ship(WIN)
-                alien.draw_lasers(WIN)
 
             # Render the enemies to display
             for enemy in enemies:
@@ -845,8 +835,8 @@ def main():
             else:
                 return False
 
-        def next_level(level, enemies, enemy_wave_length, aliens, alien_wave_length):
-            if len(enemies) == 0 and len(aliens) == 0:
+        def next_level(level, enemies, enemy_wave_length, alien_wave_length):
+            if len(enemies) == 0:
 
                 level += 1
 
@@ -869,7 +859,7 @@ def main():
                         alien = Alien(random.randrange(50, WIDTH - 50),
                                       random.randrange(-300, -50), health=200)
 
-                        aliens.append(alien)
+                        enemies.append(alien)
 
                 if level % 2 == 0:
 
@@ -885,7 +875,7 @@ def main():
                         50, WIDTH-50), random.randrange(-1000, -100), random.choice(["red", "blue", "green"]))
                     enemies.append(enemy)
 
-            return level, enemies, enemy_wave_length, aliens, alien_wave_length
+            return level, enemies, enemy_wave_length, alien_wave_length
 
         # RUN GAME
         ##########
@@ -912,8 +902,8 @@ def main():
             ##################
 
             # Increment the 'level' by one every time all enemies are eliminated
-            level, enemies, enemy_wave_length, aliens, alien_wave_length = next_level(
-                level, enemies, enemy_wave_length, aliens, alien_wave_length)
+            level, enemies, enemy_wave_length, alien_wave_length = next_level(
+                level, enemies, enemy_wave_length, alien_wave_length)
 
             # Check for user quitting the game, or exiting the window
             for event in pygame.event.get():
@@ -985,34 +975,35 @@ def main():
                     powerups.remove(powerup)
 
                 powerup.move(powerup.VELOCITY)
-
-            # Alien movement
-            for alien in aliens:
-
-                # Check for player colliding with an alien
-                if (player_ship.check_collision(alien)):
-                    player_ship.score += 5
-                    player_crash_sound.play()
-                    player_ship.health -= 50
-                    aliens.remove(alien)
-
-                # Move alien
-                alien.move(alien.ALIEN_VELOCITY)
-
-                # Move the fireballs that the alien shoots
-                if alien.random_fireball_chance() >= 985:
-
-                    alien.shoot()
-
-                alien.move_lasers(alien.laser_velocity, player_ship)
-
-                if alien.y >= 750:
-                    player_ship.lives -= 2
-                    aliens.remove(alien)
+   
 
             # Enemy movement
             for enemy in enemies:
 
+                # Check for player colliding with an alien
+                if isinstance(enemy, Alien):
+                    if (player_ship.check_collision(enemy)):
+                        player_ship.score += 3
+                        player_crash_sound.play()
+                        player_ship.health -= 50
+                        enemies.remove(enemy)
+                    
+                    # Move the aliens    
+                    enemy.move(enemy.ALIEN_VELOCITY)
+                    
+                    # Move alien fireballs
+                    if enemy.random_fireball_chance() >= 985:
+                        
+                        enemy.shoot()
+                    
+                    # Check for fireballs colliding with player
+                    enemy.move_lasers(enemy.laser_velocity, player_ship)
+                    
+                    # Check for aliens reaching bottom of screen
+                    if enemy.y >= 750:
+                        player_ship.lives -= 2
+                        enemies.remove(enemy)
+                    
                 # Check for player colliding with an enemy
                 if (player_ship.check_collision(enemy)):
                     player_ship.score += 1
@@ -1021,13 +1012,15 @@ def main():
                     enemies.remove(enemy)
 
                 # Move enemy by 'enemy_velocity'
-                enemy.move(enemy.ENEMY_VELOCITY)
+                if isinstance(enemy, enemyShip):
+                    enemy.move(enemy.ENEMY_VELOCITY)
 
                 # Move the lasers that an enemy shoots
-                if enemy.random_laser_chance() >= 995:
+                if isinstance(enemy, enemyShip) and enemy.random_laser_chance() >= 995:
                     enemy.shoot()
 
-                enemy.move_lasers(enemy.laser_velocity, player_ship)
+                if isinstance(enemy, enemyShip):
+                    enemy.move_lasers(enemy.laser_velocity, player_ship)
 
                 # If the enemy object reaches the bottom of the screen, remove a life from the player and remove that
                 # enemy from the game
@@ -1036,9 +1029,9 @@ def main():
                     enemies.remove(enemy)
 
             player_ship.move_lasers(
-                player_ship.laser_velocity, enemies, aliens)
+                player_ship.laser_velocity, enemies)
 
-            player_ship.move_bombs(player_ship.laser_velocity, enemies, aliens)
+            player_ship.move_bombs(player_ship.laser_velocity, enemies)
 
         # (end while loop)
 
