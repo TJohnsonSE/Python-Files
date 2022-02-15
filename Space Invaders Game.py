@@ -9,59 +9,61 @@ pygame.mixer.init()
 
 # Display and Assets
 ######################################################################
+class GameAssets():
 
-# Set up the display
-WIDTH, HEIGHT = 750, 750
-WIN = pygame.display.set_mode((WIDTH, HEIGHT))
+    # Set up the display
+    WIDTH, HEIGHT = 750, 750
+    WIN = pygame.display.set_mode((WIDTH, HEIGHT))
 
-# The name of the display window will be "Space Invaders"
-pygame.display.set_caption("Space Invaders, REDUX5")
+    # The name of the display window will be "Space Invaders"
+    pygame.display.set_caption("Space Invaders, REDUX5")
 
-# Load images and assets
+    # Load images and assets
 
-# Ships
-RED_SPACE_SHIP = pygame.image.load(
-    os.path.join("assets", "pixel_ship_red_small.png"))
-GREEN_SPACE_SHIP = pygame.image.load(
-    os.path.join("assets", "pixel_ship_green_small.png"))
-BLUE_SPACE_SHIP = pygame.image.load(
-    os.path.join("assets", "pixel_ship_blue_small.png"))
-PURPLE_ALIEN = pygame.image.load(os.path.join("assets", "Alien_1.png"))
-PLAYER_SPACE_SHIP = pygame.image.load(
-    os.path.join("assets", "Player_SpaceShip_01.png"))
+    # Ships
+    RED_SPACE_SHIP = pygame.image.load(
+        os.path.join("assets", "pixel_ship_red_small.png"))
+    GREEN_SPACE_SHIP = pygame.image.load(
+        os.path.join("assets", "pixel_ship_green_small.png"))
+    BLUE_SPACE_SHIP = pygame.image.load(
+        os.path.join("assets", "pixel_ship_blue_small.png"))
+    PURPLE_ALIEN = pygame.image.load(os.path.join("assets", "Alien_1.png"))
+    PLAYER_SPACE_SHIP = pygame.image.load(
+        os.path.join("assets", "Player_SpaceShip_01.png"))
 
-# Lasers
-RED_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_red.png"))
-GREEN_LASER = pygame.image.load(
-    os.path.join("assets", "pixel_laser_green.png"))
-BLUE_LASER = pygame.image.load(os.path.join("assets", "pixel_laser_blue.png"))
-YELLOW_LASER = pygame.image.load(
-    os.path.join("assets", "pixel_laser_yellow.png"))
-ALIEN_FIREBALL = pygame.image.load(
-    os.path.join("assets", "Alien_1_Fireball.png"))
+    # Lasers
+    RED_LASER = pygame.image.load(
+        os.path.join("assets", "pixel_laser_red.png"))
+    GREEN_LASER = pygame.image.load(
+        os.path.join("assets", "pixel_laser_green.png"))
+    BLUE_LASER = pygame.image.load(
+        os.path.join("assets", "pixel_laser_blue.png"))
+    YELLOW_LASER = pygame.image.load(
+        os.path.join("assets", "pixel_laser_yellow.png"))
+    ALIEN_FIREBALL = pygame.image.load(
+        os.path.join("assets", "Alien_1_Fireball.png"))
 
-# Powerups
-HEALTH_UP = pygame.image.load(os.path.join("assets", "Heart_Powerup.png"))
-SUPERBOMB = pygame.image.load(os.path.join("assets", "Superbomb.png"))
+    # Powerups
+    HEALTH_UP = pygame.image.load(os.path.join("assets", "Heart_Powerup.png"))
+    SUPERBOMB = pygame.image.load(os.path.join("assets", "Superbomb.png"))
 
-# Background
-BACKGROUND = pygame.transform.scale(pygame.image.load(
-    os.path.join("assets", "background-black.png")), (WIDTH, HEIGHT))
+    # Background
+    BACKGROUND = pygame.transform.scale(pygame.image.load(
+        os.path.join("assets", "background-black.png")), (WIDTH, HEIGHT))
 
 # Classes
 #############################################################################
 
 # Animation Class: 'Explosion'
-
-
 class Explosion(pygame.sprite.Sprite):
     def __init__(self, x, y):
         super().__init__()
         self.sprites = []
         self.x = x
         self.y = y
-        self.explosion_sound = pygame.mixer.Sound(os.path.join("assets\Sounds", "mixkit-arcade-game-explosion-2759.wav"))
-        
+        self.explosion_sound = pygame.mixer.Sound(os.path.join(
+            "assets\Sounds", "mixkit-arcade-game-explosion-2759.wav"))
+
         self.sprites.append(pygame.image.load(
             os.path.join("assets", "Explosion_sheet1_00.png")))
         self.sprites.append(pygame.image.load(
@@ -215,9 +217,9 @@ class Explosion(pygame.sprite.Sprite):
         self.img = self.sprites[self.current_sprite]
 
         self.rect = self.img.get_rect()
-        
-        
+
     # Method returns 1 if the animation cycles through every sprite, to prevent multiple animations playing
+
     def update(self):
 
         self.current_sprite += 1
@@ -233,8 +235,6 @@ class Explosion(pygame.sprite.Sprite):
 
 
 # Class: 'Laser'
-
-
 class Laser:
     def __init__(self, x, y, img):
         self.x = x
@@ -275,7 +275,7 @@ class superBomb(Laser):
         super().__init__(x, y, img)
         self.img = img
         self.mask = pygame.mask.from_surface(self.img)
-        
+
 # Parent class: 'Ship'
 
 
@@ -326,7 +326,7 @@ class Ship:
             # Move the laser object by the 'velocity' argument
             laser.move(velocity)
 
-            if laser.off_screen(HEIGHT):
+            if laser.off_screen(GameAssets.HEIGHT):
                 self.lasers.remove(laser)
 
             elif laser.collision(obj):
@@ -403,19 +403,19 @@ class playerShip(Ship):
         # Call the parent constructor 'Ship'
         super().__init__(x, y, health)
 
-        self.ship_img = PLAYER_SPACE_SHIP
-        self.laser_img = YELLOW_LASER
+        self.ship_img = GameAssets.PLAYER_SPACE_SHIP
+        self.laser_img = GameAssets.YELLOW_LASER
 
         # Create a mask that fits the "ship_img" image pixel perfectly for collision
         self.mask = pygame.mask.from_surface(self.ship_img)
         self.max_health = health
-    
+
     def move_bombs(self, velocity, objs):
-                        
+
         for bomb in self.readied_bombs:
             bomb.move(-velocity)
 
-            if bomb.off_screen(HEIGHT):
+            if bomb.off_screen(GameAssets.HEIGHT):
                 self.readied_bombs.remove(bomb)
 
             else:
@@ -436,13 +436,12 @@ class playerShip(Ship):
                                             self.score += 3
                                         else:
                                             self.score += 1
-                        
+
                         explode_enemies(self, objs)
-                        
+
                         if bomb in self.readied_bombs:
                             self.readied_bombs.remove(bomb)
 
-            
     # Method move_lasers(velocity, objs): Overridden method of parent 'Ship' class.  This method differs from the parent
     # method in that the velocity passed to the Laser.move() method needs to be negative for the laser to travel upwards.  It
     # also must check for collision with the 'objs' argument, which will generally be a list of enemy ship objects.
@@ -454,7 +453,7 @@ class playerShip(Ship):
         for laser in self.lasers:
             laser.move(-velocity)
 
-            if laser.off_screen(HEIGHT):
+            if laser.off_screen(GameAssets.HEIGHT):
                 self.lasers.remove(laser)
 
             else:
@@ -465,20 +464,10 @@ class playerShip(Ship):
                             objs.remove(enemy)
                             if isinstance(enemy, Alien):
                                 self.score += 3
-                            else:    
+                            else:
                                 self.score += 1
                         if laser in self.lasers:
                             self.lasers.remove(laser)
-
-                """for alien in objs2:
-                    if laser.collision(alien):
-                        alien.health -= 100
-                        if alien.health <= 0:
-                            objs2.remove(alien)
-                            self.score += 3
-                        if laser in self.lasers:
-                            self.lasers.remove(laser)
-                            """
 
     def shoot(self):
 
@@ -537,9 +526,9 @@ class enemyShip(Ship):
     ENEMY_VELOCITY = 1.6
 
     # A dictionary that stores the loaded assets with their corresponding color key (key = color, value = assets tuple)
-    COLOR_MAP = {"red": (RED_SPACE_SHIP, RED_LASER),
-                 "green": (GREEN_SPACE_SHIP, GREEN_LASER),
-                 "blue": (BLUE_SPACE_SHIP, BLUE_LASER)}
+    COLOR_MAP = {"red": (GameAssets.RED_SPACE_SHIP, GameAssets.RED_LASER),
+                 "green": (GameAssets.GREEN_SPACE_SHIP, GameAssets.GREEN_LASER),
+                 "blue": (GameAssets.BLUE_SPACE_SHIP, GameAssets.BLUE_LASER)}
 
     def __init__(self, x, y, color, health=100):
         super().__init__(x, y, health)
@@ -569,8 +558,8 @@ class Alien(Ship):
 
     def __init__(self, x, y, health=200):
         super().__init__(x, y, health)
-        self.ship_img = PURPLE_ALIEN
-        self.laser_img = ALIEN_FIREBALL
+        self.ship_img = GameAssets.PURPLE_ALIEN
+        self.laser_img = GameAssets.ALIEN_FIREBALL
         self.mask = pygame.mask.from_surface(self.ship_img)
 
     def move(self, velocity):
@@ -597,7 +586,7 @@ class healthPowerup(Powerup):
 
     def __init__(self, x, y, health=1):
         super().__init__(x, y, health)
-        self.ship_img = HEALTH_UP
+        self.ship_img = GameAssets.HEALTH_UP
         self.mask = pygame.mask.from_surface(self.ship_img)
 
     def check_collision(self, obj):
@@ -612,7 +601,7 @@ class healthPowerup(Powerup):
 class superBombPowerup(Powerup):
     def __init__(self, x, y, health=1):
         super().__init__(x, y, health)
-        self.ship_img = SUPERBOMB
+        self.ship_img = GameAssets.SUPERBOMB
         self.mask = pygame.mask.from_surface(self.ship_img)
 
     def check_collision(self, obj):
@@ -640,7 +629,8 @@ def display_HUD(window, ship, score, health, high_score):
     def display_power_bombs_bar(window, ship):
 
         display_scalar = 0
-        mini_bomb_image = pygame.transform.scale(SUPERBOMB, (25, 25))
+        mini_bomb_image = pygame.transform.scale(
+            GameAssets.SUPERBOMB, (25, 25))
 
         for bomb in ship.super_bomb_count:
 
@@ -665,7 +655,7 @@ def display_HUD(window, ship, score, health, high_score):
         high_score_label = high_score_font.render(
             f"High Score: {high_score}", 1, (132, 233, 229))
         window.blit(high_score_label,
-                    (WIDTH - high_score_label.get_width() - 10, 40))
+                    (GameAssets.WIDTH - high_score_label.get_width() - 10, 40))
 
     display_power_bombs_bar(window, ship)
 
@@ -742,7 +732,7 @@ def main():
         def redraw_window():
 
             # Render the background
-            WIN.blit(BACKGROUND, (0, 0))
+            GameAssets.WIN.blit(GameAssets.BACKGROUND, (0, 0))
 
             # Initialize text; color: (255,255,255) == white
             lives_label = main_font.render(
@@ -751,41 +741,42 @@ def main():
                 f"Level: {level}", 1, (255, 255, 255))
 
             # Render text to display
-            WIN.blit(lives_label, (10, 10))
-            WIN.blit(level_label, (WIDTH - level_label.get_width() - 10, 10))
+            GameAssets.WIN.blit(lives_label, (10, 10))
+            GameAssets.WIN.blit(
+                level_label, (GameAssets.WIDTH - level_label.get_width() - 10, 10))
 
             # Render all elements of the HUD to the display
-            display_HUD(WIN, player_ship, player_ship.score,
+            display_HUD(GameAssets.WIN, player_ship, player_ship.score,
                         player_ship.health, high_score)
 
             # Render explosions to display
             for explosion in player_ship.explosions:
-                display_explosions(WIN, explosion)
-                    
+                display_explosions(GameAssets.WIN, explosion)
+
                 if explosion.update() == 1:
                     player_ship.explosions.remove(explosion)
 
             # Render player healthbar to display
-            display_healthbar(WIN, player_ship.health, player_ship)
+            display_healthbar(GameAssets.WIN, player_ship.health, player_ship)
 
             # Render Alien healthbars to display
             for enemy in enemies:
                 if isinstance(enemy, Alien):
-                    display_healthbar(WIN, enemy.health, enemy)
+                    display_healthbar(GameAssets.WIN, enemy.health, enemy)
 
             # Render the powerups to display
             for powerup in powerups:
-                powerup.draw_ship(WIN)
+                powerup.draw_ship(GameAssets.WIN)
 
             # Render the enemies to display
             for enemy in enemies:
-                enemy.draw_ship(WIN)
-                enemy.draw_lasers(WIN)
+                enemy.draw_ship(GameAssets.WIN)
+                enemy.draw_lasers(GameAssets.WIN)
 
             # Render the player ship and lasers to display
-            player_ship.draw_ship(WIN)
-            player_ship.draw_lasers(WIN)
-            player_ship.draw_bombs(WIN)
+            player_ship.draw_ship(GameAssets.WIN)
+            player_ship.draw_lasers(GameAssets.WIN)
+            player_ship.draw_bombs(GameAssets.WIN)
 
             pygame.display.update()
 
@@ -803,8 +794,8 @@ def main():
             pause_game_label = pause_game_font.render(
                 f"PAUSED", 1, (255, 255, 255))
 
-            WIN.blit(pause_game_label,
-                     ((WIDTH/2 - pause_game_label.get_width()/2), HEIGHT/2))
+            GameAssets.WIN.blit(GameAssets.pause_game_label,
+                                ((GameAssets.WIDTH/2 - GameAssets.pause_game_label.get_width()/2), GameAssets.HEIGHT/2))
 
             pygame.display.update()
 
@@ -819,7 +810,7 @@ def main():
 
                 game_over_label = game_over_font.render(
                     f"GAME OVER", 1, (255, 0, 0))
-                WIN.blit(game_over_label, (WIDTH/2 -
+                GameAssets.WIN.blit(game_over_label, (GameAssets.WIDTH/2 -
                                            game_over_label.get_width()/2, 375))
                 pygame.display.update()
 
@@ -842,7 +833,7 @@ def main():
 
                 if superBombPowerup.random_spawn_chance() == True:
                     super_bomb = superBombPowerup(
-                        random.randrange(50, WIDTH - 100), -10, None)
+                        random.randrange(50, GameAssets.WIDTH - 100), -10, None)
                     powerups.append(super_bomb)
 
                 if level < 3:
@@ -856,7 +847,7 @@ def main():
 
                     for alien in range(alien_wave_length):
 
-                        alien = Alien(random.randrange(50, WIDTH - 50),
+                        alien = Alien(random.randrange(50, GameAssets.WIDTH - 50),
                                       random.randrange(-300, -50), health=200)
 
                         enemies.append(alien)
@@ -867,12 +858,12 @@ def main():
 
                 if level % 3 == 0:
                     health_heart = healthPowerup(
-                        random.randrange(100, WIDTH - 100), -20, None)
+                        random.randrange(100, GameAssets.WIDTH - 100), -20, None)
                     powerups.append(health_heart)
 
                 for enemy in range(enemy_wave_length):
                     enemy = enemyShip(random.randrange(
-                        50, WIDTH-50), random.randrange(-1000, -100), random.choice(["red", "blue", "green"]))
+                        50, GameAssets.WIDTH-50), random.randrange(-1000, -100), random.choice(["red", "blue", "green"]))
                     enemies.append(enemy)
 
             return level, enemies, enemy_wave_length, alien_wave_length
@@ -926,11 +917,11 @@ def main():
                 player_ship.x -= player_ship.player_velocity
 
             # Move player_ship down (add to y value)
-            if (keys[pygame.K_s] or keys[pygame.K_DOWN]) and player_ship.y + player_ship.player_velocity < HEIGHT - player_ship.get_height():
+            if (keys[pygame.K_s] or keys[pygame.K_DOWN]) and player_ship.y + player_ship.player_velocity < GameAssets.HEIGHT - player_ship.get_height():
                 player_ship.y += player_ship.player_velocity
 
             # Move player_ship right (add to x value)
-            if (keys[pygame.K_d] or keys[pygame.K_RIGHT]) and player_ship.x + player_ship.player_velocity < WIDTH - player_ship.get_width() + 13:
+            if (keys[pygame.K_d] or keys[pygame.K_RIGHT]) and player_ship.x + player_ship.player_velocity < GameAssets.WIDTH - player_ship.get_width() + 13:
                 player_ship.x += player_ship.player_velocity
 
             # Move player_ship up (subtract from y value)
@@ -975,7 +966,6 @@ def main():
                     powerups.remove(powerup)
 
                 powerup.move(powerup.VELOCITY)
-   
 
             # Enemy movement
             for enemy in enemies:
@@ -987,23 +977,23 @@ def main():
                         player_crash_sound.play()
                         player_ship.health -= 50
                         enemies.remove(enemy)
-                    
-                    # Move the aliens    
+
+                    # Move the aliens
                     enemy.move(enemy.ALIEN_VELOCITY)
-                    
+
                     # Move alien fireballs
                     if enemy.random_fireball_chance() >= 985:
-                        
+
                         enemy.shoot()
-                    
+
                     # Check for fireballs colliding with player
                     enemy.move_lasers(enemy.laser_velocity, player_ship)
-                    
+
                     # Check for aliens reaching bottom of screen
                     if enemy.y >= 750:
                         player_ship.lives -= 2
                         enemies.remove(enemy)
-                    
+
                 # Check for player colliding with an enemy
                 if (player_ship.check_collision(enemy)):
                     player_ship.score += 1
