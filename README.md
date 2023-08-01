@@ -12,3 +12,11 @@
   - Bonus stages
   - New enemy types
   - Ship model selection
+
+
+
+  Dependencies
+
+    - Python 3.9.7
+    - Pygame 2.0.2
+    
